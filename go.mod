@@ -1,5 +1,3 @@
-//module github.com/moethu/webg3n
-
 module github.com/vshashi01/webg3n
 
 require (
@@ -16,13 +14,11 @@ require (
 	golang.org/x/net v0.0.0-20200602114024-627f9648deb9 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
+	github.com/tinyzimmer/go-gst v0.1.2
 )
 
-//replace github.com/moethu/webg3n/renderer => ./renderer
-
-//replace github.com/moethu/webg3n/byteGraph => ./byteGraph
-
-//replace github.com/g3n/engine => github.com/moethu/engine v0.0.0-20200610122637-682e1e061a29
 replace github.com/g3n/engine => E:\Development\Shashi-Git\webg3n-engine
+
+replace github.com/tinyzimmer/go-gst => E:\Development\Shashi-Git\go-gst
 
 go 1.13
