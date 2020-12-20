@@ -10,6 +10,8 @@ import (
 	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/util/application"
 	"github.com/g3n/engine/util/logger"
+	"github.com/tinyzimmer/go-gst/gst"
+	"github.com/vshashi01/webg3n/encode"
 )
 
 //AppSingleton used to the http calls
@@ -121,6 +123,18 @@ func LoadRenderingApp(app *RenderingApp, sessionID string, h int, w int, write c
 	app.modelpath = modelpath
 	AppSingleton = app
 	app.setupScene()
+	app.Application.Subscribe(application.OnAfterRender, app.onRender)
+
+	//for gstream pipeline
+	var pipeline *gst.Pipeline
+	var _ error
+	if pipeline, _ = encode.CreatePipeline(uint(app.Width), uint(app.Height), func() []byte {
+		return app.Gl().ReadPixels(0, 0, app.Width, app.Height, 6408, 5121)
+	}); err != nil {
+		return
+	}
+	encode.Run(pipeline)
+
 	go app.commandLoop()
 	err = app.Run()
 	if err != nil {
@@ -168,7 +182,7 @@ func (app *RenderingApp) setupScene() {
 
 	app.zoomToExtent()
 	app.Orbit().Enabled = true
-	app.Application.Subscribe(application.OnAfterRender, app.onRender)
+
 }
 
 func (app *RenderingApp) loadDefaultBlueBox() {
