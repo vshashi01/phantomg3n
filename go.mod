@@ -14,11 +14,13 @@ require (
 	golang.org/x/net v0.0.0-20200602114024-627f9648deb9 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
-	github.com/tinyzimmer/go-gst v0.1.2
+	github.com/tinyzimmer/go-gst v0.1.3
+	github.com/notedit/gst v0.0.7
 )
 
-replace github.com/g3n/engine => E:\Development\Shashi-Git\webg3n-engine
+//replace github.com/g3n/engine => E:\Development\Shashi-Git\webg3n-engine
+replace github.com/g3n/engine => /home/vshashi01/Dev/webg3n-engine
 
-replace github.com/tinyzimmer/go-gst => E:\Development\Shashi-Git\go-gst
+//replace github.com/tinyzimmer/go-gst => E:\Development\Shashi-Git\go-gst
 
 go 1.13

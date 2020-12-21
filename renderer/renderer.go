@@ -1,6 +1,8 @@
 package renderer
 
 import (
+	"fmt"
+
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/graphic"
@@ -10,7 +12,6 @@ import (
 	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/util/application"
 	"github.com/g3n/engine/util/logger"
-	"github.com/tinyzimmer/go-gst/gst"
 	"github.com/vshashi01/webg3n/encode"
 )
 
@@ -83,6 +84,7 @@ type RenderingApp struct {
 	entityList        map[string]*core.Node
 	graphicList       map[*core.Node]*graphic.Mesh
 	Debug             bool
+	streamer          *encode.PhantomStreamer
 
 	//nodeBuffer        map[string]*core.Node
 }
@@ -126,20 +128,24 @@ func LoadRenderingApp(app *RenderingApp, sessionID string, h int, w int, write c
 	app.Application.Subscribe(application.OnAfterRender, app.onRender)
 
 	//for gstream pipeline
-	var pipeline *gst.Pipeline
-	var _ error
-	if pipeline, _ = encode.CreatePipeline(uint(app.Width), uint(app.Height), func() []byte {
-		return app.Gl().ReadPixels(0, 0, app.Width, app.Height, 6408, 5121)
-	}); err != nil {
-		return
+	streamer, err1 := encode.NewPhantomStreamer()
+
+	if err1 != nil {
+		fmt.Println("Something went wrong")
+		panic(err1)
 	}
-	encode.Run(pipeline)
+
+	app.streamer = streamer
 
 	go app.commandLoop()
 	err = app.Run()
 	if err != nil {
 		panic(err)
 	}
+
+	app.streamer.PushBufferRoutine(func() []byte {
+		return app.Gl().ReadPixels(0, 0, app.Width, app.Height, 6408, 5121)
+	})
 
 	app.Log().Info("app was running for %f seconds\n", app.RunSeconds())
 }
