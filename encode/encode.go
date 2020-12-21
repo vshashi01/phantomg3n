@@ -7,6 +7,18 @@ import (
 	"github.com/notedit/gst"
 )
 
+func TempTryOut() (*gst.Pipeline, error) {
+	pipeline, err := gst.ParseLaunch("videotestsrc ! video/x-raw,width=640,height=480,format=I420 ! vp8enc error-resilient=partitions keyframe-max-dist=10 auto-alt-ref=true cpu-used=5 deadline=1 ! rtpvp8pay ! udpsink host=127.0.0.1 port=5004")
+
+	if err != nil {
+		return nil, err
+	}
+
+	pipeline.SetState(gst.StatePlaying)
+
+	return pipeline, nil
+}
+
 // PhantomStreamer keeps all the expected pointers to the respoective elements.
 type PhantomStreamer struct {
 	pipeline *gst.Pipeline
@@ -15,7 +27,7 @@ type PhantomStreamer struct {
 }
 
 // NewPhantomStreamer creates the intended pipeline to stream the viewport.
-func NewPhantomStreamer() (*PhantomStreamer, error) {
+func NewPhantomStreamer(f func() []byte) (*PhantomStreamer, error) {
 	//pipeline, err := gst.ParseLaunch("appsrc name=mysource format=time is-live=true do-timestamp=true ! videoconvert ! autovideosink")
 
 	streamer := &PhantomStreamer{}
@@ -26,7 +38,7 @@ func NewPhantomStreamer() (*PhantomStreamer, error) {
 		return nil, err
 	}
 
-	videoCap := gst.CapsFromString("video/x-raw,format=RGB,width=320,height=240,bpp=24,depth=24")
+	videoCap := gst.CapsFromString("video/x-raw,format=RGB,width=640,height=480,bpp=24,depth=24")
 	element := pipeline.GetByName("mysource")
 	element.SetObject("caps", videoCap)
 
@@ -34,32 +46,116 @@ func NewPhantomStreamer() (*PhantomStreamer, error) {
 	streamer.appsrc = element
 	streamer.millis = (17 * time.Millisecond)
 
-	return streamer, nil
-}
-
-// PushBufferRoutine decides to push the expected data into the buffer
-func (streamer *PhantomStreamer) PushBufferRoutine(f func() []byte) {
-	ticker := time.NewTicker(streamer.millis)
-	done := make(chan bool)
-
 	streamer.pipeline.SetState(gst.StatePlaying)
+
+	ticker := time.NewTicker(streamer.millis)
 
 	go func() {
 		for {
 			select {
-			case <-done:
-				return
 			case <-ticker.C:
 				data := f()
 				err := streamer.appsrc.PushBuffer(data)
 
 				if err != nil {
 					fmt.Println("push buffer error")
-					//break
+					streamer.pipeline.SetState(gst.StateNull)
+					break
 				}
 				fmt.Println("Pushed a data buffer")
 			}
 		}
+	}()
+
+	return streamer, nil
+}
+
+// RunPhantomStreamer runs the pipeline.
+func RunPhantomStreamer(phantomStreamer *PhantomStreamer, f func() []byte) (*PhantomStreamer, error) {
+	if phantomStreamer == nil {
+		streamer := &PhantomStreamer{}
+
+		//pipeline, err := gst.ParseLaunch("appsrc name=mysource format=time is-live=true do-timestamp=true emit-signals=false ! videoconvert ! vp8enc error-resilient=partitions keyframe-max-dist=10 auto-alt-ref=true cpu-used=5 deadline=1 ! rtpvp8pay ! udpsink host=127.0.0.1 port=5004")
+		pipeline, err := gst.ParseLaunch("appsrc name=mysource format=time is-live=true do-timestamp=true emit-signals=false ! videoconvert ! autovideosink")
+		if err != nil {
+			//panic("pipeline error")
+			return nil, err
+		}
+
+		videoCap := gst.CapsFromString("video/x-raw,format=RGB,width=640,height=480,bpp=24,depth=24")
+		element := pipeline.GetByName("mysource")
+		element.SetObject("caps", videoCap)
+
+		streamer.pipeline = pipeline
+		streamer.appsrc = element
+		streamer.millis = (17 * time.Millisecond)
+
+		streamer.pipeline.SetState(gst.StatePlaying)
+
+		phantomStreamer = streamer
+	}
+
+	data := f()
+	err := phantomStreamer.appsrc.PushBuffer(data)
+
+	if err != nil {
+		fmt.Println("push buffer error")
+		phantomStreamer.pipeline.SetState(gst.StateNull)
+
+		return phantomStreamer, err
+	}
+
+	fmt.Println("Pushed a data buffer")
+
+	return phantomStreamer, nil
+}
+
+// RunXPhantomStreamer runs the pipeline.
+func RunXPhantomStreamer(phantomStreamer *PhantomStreamer) (*PhantomStreamer, error) {
+	//if phantomStreamer == nil {
+	streamer := &PhantomStreamer{}
+
+	//pipeline, err := gst.ParseLaunch("videotestsrc ! video/x-raw,width=640,height=480,format=I420 ! vp8enc error-resilient=partitions keyframe-max-dist=10 auto-alt-ref=true cpu-used=5 deadline=1 ! rtpvp8pay ! udpsink host=127.0.0.1 port=5004")
+	pipeline, err := gst.ParseLaunch("videotestsrc ! videoconvert ! autovideosink")
+	if err != nil {
+		//panic("pipeline error")
+		return phantomStreamer, err
+	}
+
+	streamer.pipeline = pipeline
+
+	streamer.pipeline.SetState(gst.StatePlaying)
+
+	phantomStreamer = streamer
+	return streamer, nil
+	//}
+
+	//return phantomStreamer, nil
+}
+
+// PushBufferRoutine decides to push the expected data into the buffer
+func (streamer *PhantomStreamer) PushBufferRoutine(f func() []byte) {
+	ticker := time.NewTicker(streamer.millis)
+	//done := make(chan bool)
+
+	//streamer.pipeline.SetState(gst.StatePlaying)
+
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				data := f()
+				err := streamer.appsrc.PushBuffer(data)
+
+				if err != nil {
+					fmt.Println("push buffer error")
+					streamer.pipeline.SetState(gst.StateNull)
+					break
+				}
+				fmt.Println("Pushed a data buffer")
+			}
+		}
+
 	}()
 
 }

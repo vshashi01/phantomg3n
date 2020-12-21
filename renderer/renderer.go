@@ -1,8 +1,6 @@
 package renderer
 
 import (
-	"fmt"
-
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/graphic"
@@ -127,25 +125,13 @@ func LoadRenderingApp(app *RenderingApp, sessionID string, h int, w int, write c
 	app.setupScene()
 	app.Application.Subscribe(application.OnAfterRender, app.onRender)
 
-	//for gstream pipeline
-	streamer, err1 := encode.NewPhantomStreamer()
-
-	if err1 != nil {
-		fmt.Println("Something went wrong")
-		panic(err1)
-	}
-
-	app.streamer = streamer
+	encode.RunXPhantomStreamer(app.streamer)
 
 	go app.commandLoop()
 	err = app.Run()
 	if err != nil {
 		panic(err)
 	}
-
-	app.streamer.PushBufferRoutine(func() []byte {
-		return app.Gl().ReadPixels(0, 0, app.Width, app.Height, 6408, 5121)
-	})
 
 	app.Log().Info("app was running for %f seconds\n", app.RunSeconds())
 }

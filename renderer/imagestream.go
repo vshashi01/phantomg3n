@@ -4,14 +4,21 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/base64"
-	"github.com/disintegration/imaging"
 	"image"
 	"image/jpeg"
+
+	"github.com/disintegration/imaging"
 )
 
 // onRender event handler for onRender event
 func (app *RenderingApp) onRender(evname string, ev interface{}) {
 	app.makeScreenShot()
+
+	//encode.RunPhantomStreamer(app.streamer, func() []byte {
+	//	return app.Gl().ReadPixels(0, 0, 640, 480, 6408, 5121)
+	//})
+
+	//encode.RunXPhantomStreamer(app.streamer)
 }
 
 var md5SumBuffer [16]byte
