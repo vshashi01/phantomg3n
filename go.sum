@@ -51,6 +51,8 @@ github.com/disintegration/imaging v1.6.1 h1:JnBbK6ECIZb1NsWIikP9pd8gIlTIRx7fuDNp
 github.com/disintegration/imaging v1.6.1/go.mod h1:xuIt+sRxDFrHS0drzXUlCJthkJ8k7lkkUojDSR247MQ=
 github.com/disintegration/imaging v1.6.2 h1:w1LecBlG2Lnp8B3jk5zSuNqd7b4DXhcjwek1ei82L+c=
 github.com/disintegration/imaging v1.6.2/go.mod h1:44/5580QXChDfwIclfc/PCwrr44amcmDAg8hxG0Ewe4=
+github.com/enriquebris/goconcurrentqueue v0.6.0 h1:DJ97cgoPVoqlC4tTGBokn/omaB3o16yIs5QdAm6YEjc=
+github.com/enriquebris/goconcurrentqueue v0.6.0/go.mod h1:wGJhQNFI4wLNHleZLo5ehk1puj8M6OIl0tOjs3kwJus=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
@@ -300,6 +302,8 @@ github.com/tinyzimmer/go-gst v0.1.2 h1:Un0SKxgTRIoMZMUjj569+G+ZIa8n4vfgCbnRftSV8
 github.com/tinyzimmer/go-gst v0.1.2/go.mod h1:v3+xB7oFSDv+luCktdT7e86R/c0ote2brlUY3AxwF+w=
 github.com/tinyzimmer/go-gst v0.1.3 h1:TJ4LaIscViKkBzDprSfEgJvrsv+ZSiQaCvOZJ0QIy9Y=
 github.com/tinyzimmer/go-gst v0.1.3/go.mod h1:v3+xB7oFSDv+luCktdT7e86R/c0ote2brlUY3AxwF+w=
+github.com/tinyzimmer/go-gst v0.1.4 h1:ovo/dpPCAUOgzfMPgY+UXloGW6UqzLD7CGFgT6bPH/s=
+github.com/tinyzimmer/go-gst v0.1.4/go.mod h1:v3+xB7oFSDv+luCktdT7e86R/c0ote2brlUY3AxwF+w=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/ugorji/go v1.1.4 h1:j4s+tAvLfL3bZyefP2SEWmhBzmuIlH/eqNuPdFPgngw=
 github.com/ugorji/go v1.1.4/go.mod h1:uQMGLiO92mf5W77hV/PUCpI3pbzQx3CRekS0kk+RGrc=

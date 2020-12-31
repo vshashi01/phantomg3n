@@ -8,26 +8,25 @@ import (
 	"image/jpeg"
 
 	"github.com/disintegration/imaging"
+	"github.com/g3n/engine/gls"
+	"github.com/vshashi01/webg3n/encode"
 )
 
 // onRender event handler for onRender event
 func (app *RenderingApp) onRender(evname string, ev interface{}) {
-	app.makeScreenShot()
+	buffer := app.makeScreenShot()
 
-	//encode.RunPhantomStreamer(app.streamer, func() []byte {
-	//	return app.Gl().ReadPixels(0, 0, 640, 480, 6408, 5121)
-	//})
-
-	//encode.RunXPhantomStreamer(app.streamer)
+	newCont := encode.NewGstreamerFrameContainer(buffer, uint(app.FrameCount()), false)
+	app.frameQueue.Enqueue(newCont)
 }
 
 var md5SumBuffer [16]byte
 
 // makeScreenShot reads the opengl buffer, encodes it as jpeg and sends it to the channel
-func (app *RenderingApp) makeScreenShot() {
+func (app *RenderingApp) makeScreenShot() []byte {
 	w := app.Width
 	h := app.Height
-	data := app.Gl().ReadPixels(0, 0, w, h, 6408, 5121)
+	data := app.Gl().ReadPixels(0, 0, w, h, gls.RGBA, gls.UNSIGNED_BYTE)
 	img := image.NewNRGBA(image.Rect(0, 0, w, h))
 	img.Pix = data
 
@@ -73,4 +72,6 @@ func (app *RenderingApp) makeScreenShot() {
 		app.cImagestream <- []byte(imgBase64Str)
 	}
 	md5SumBuffer = md
+
+	return img.Pix
 }

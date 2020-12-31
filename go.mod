@@ -13,14 +13,14 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/moethu/webg3n v0.0.0-20201010132405-ce0d591c0e62
-	github.com/notedit/gst v0.0.7
+	//github.com/notedit/gst v0.0.7
 	github.com/peterh/liner v1.2.1 // indirect
 	github.com/russross/blackfriday v1.6.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.7.0 // indirect
 	github.com/spf13/cobra v1.1.1 // indirect
-	github.com/tinyzimmer/go-gst v0.1.3
+	github.com/tinyzimmer/go-gst v0.1.4
 	go.starlark.net v0.0.0-20201210151846-e81fc95f7bd5 // indirect
 	golang.org/x/arch v0.0.0-20201207233722-1e68675e650f // indirect
 	golang.org/x/net v0.0.0-20200602114024-627f9648deb9 // indirect
@@ -28,12 +28,13 @@ require (
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	github.com/enriquebris/goconcurrentqueue v0.6.0
 )
 
 replace github.com/g3n/engine => E:\Development\Shashi-Git\webg3n-engine
 
 //replace github.com/g3n/engine => /home/vshashi01/Dev/webg3n-engine
 
-//replace github.com/tinyzimmer/go-gst => E:\Development\Shashi-Git\go-gst
+replace github.com/tinyzimmer/go-gst => E:\Development\Shashi-Git\go-gst
 
 go 1.13

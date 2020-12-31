@@ -1,6 +1,7 @@
 package renderer
 
 import (
+	"github.com/enriquebris/goconcurrentqueue"
 	"github.com/g3n/engine/core"
 	"github.com/g3n/engine/geometry"
 	"github.com/g3n/engine/graphic"
@@ -10,6 +11,7 @@ import (
 	"github.com/g3n/engine/math32"
 	"github.com/g3n/engine/util/application"
 	"github.com/g3n/engine/util/logger"
+
 	"github.com/vshashi01/webg3n/encode"
 )
 
@@ -82,7 +84,7 @@ type RenderingApp struct {
 	entityList        map[string]*core.Node
 	graphicList       map[*core.Node]*graphic.Mesh
 	Debug             bool
-	streamer          *encode.PhantomStreamer
+	frameQueue        *goconcurrentqueue.FIFO
 
 	//nodeBuffer        map[string]*core.Node
 }
@@ -121,12 +123,20 @@ func LoadRenderingApp(app *RenderingApp, sessionID string, h int, w int, write c
 	app.cImagestream = write
 	app.cCommands = read
 	app.modelpath = modelpath
+
+	// create the queue and assign an initial frame to it
+	app.frameQueue = goconcurrentqueue.NewFIFO()
+	firstFrame := encode.NewInitialFrameContainer(w, h)
+	app.frameQueue.Enqueue(firstFrame)
+
 	AppSingleton = app
 	app.setupScene()
 	app.Application.Subscribe(application.OnAfterRender, app.onRender)
 
-	encode.RunXPhantomStreamer(app.streamer)
+	// run the gstreamer pipeline on a separate goroutine
+	go encode.RunPhantom3DPipeline(app.frameQueue, app.Width, app.Height)
 
+	// run the command loop on a separate goroutine
 	go app.commandLoop()
 	err = app.Run()
 	if err != nil {
