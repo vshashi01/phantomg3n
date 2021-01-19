@@ -14,7 +14,9 @@ import (
 
 // onRender event handler for onRender event
 func (app *RenderingApp) onRender(evname string, ev interface{}) {
-	buffer := app.makeScreenShot()
+	//fmt.Println("Previous frame delta seconds:", app.FrameDeltaSeconds())
+	//buffer := app.makeJPEGScreenShot()
+	buffer := app.makeOpenGLFrame()
 
 	newCont := encode.NewGstreamerFrameContainer(buffer, uint(app.FrameCount()), false)
 	app.frameQueue.Enqueue(newCont)
@@ -22,8 +24,8 @@ func (app *RenderingApp) onRender(evname string, ev interface{}) {
 
 var md5SumBuffer [16]byte
 
-// makeScreenShot reads the opengl buffer, encodes it as jpeg and sends it to the channel
-func (app *RenderingApp) makeScreenShot() []byte {
+// makeJPEGScreenShot reads the opengl buffer, encodes it as jpeg and sends it to the channel
+func (app *RenderingApp) makeJPEGScreenShot() []byte {
 	w := app.Width
 	h := app.Height
 	data := app.Gl().ReadPixels(0, 0, w, h, gls.RGBA, gls.UNSIGNED_BYTE)
@@ -73,5 +75,17 @@ func (app *RenderingApp) makeScreenShot() []byte {
 	}
 	md5SumBuffer = md
 
+	return img.Pix
+}
+
+// makeOpenGLFrame reads the GL pixel, flips the views and returns the bytes.
+func (app *RenderingApp) makeOpenGLFrame() []byte {
+	w := app.Width
+	h := app.Height
+	data := app.Gl().ReadPixels(0, 0, w, h, gls.RGBA, gls.UNSIGNED_BYTE)
+	img := image.NewNRGBA(image.Rect(0, 0, w, h))
+	img.Pix = data
+
+	img = imaging.FlipV(img)
 	return img.Pix
 }

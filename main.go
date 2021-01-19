@@ -44,11 +44,15 @@ func main() {
 		WriteTimeout: 600 * time.Second,
 	}
 
-	//router.Static("/static/", "./static/")
-	router.Any("/webg3n", serveWebsocket)
-	router.PUT("/loadModel", loadModel)
-	router.GET("/objects", getObjects)
-	//router.GET("/", home)
+	clientMap := NewClientMap()
+
+	//clean all clients on a separate routine
+	//go CleanClient(clientMap)
+
+	router.Any("/webg3n", clientMap.serveWebsocket)
+	router.Any("/rtcwebg3n", clientMap.createRTCPeerConnection)
+	router.PUT("/loadModel", clientMap.loadModel)
+	router.GET("/objects", clientMap.getObjects)
 	log.Println("Starting HTTP Server on Port 8000")
 
 	go func() {

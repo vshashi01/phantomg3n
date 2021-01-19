@@ -78,13 +78,16 @@ func (cont *GStreamerFrameContainer) GetInterface() *FrameContainerInterface {
 }
 
 // RunPhantom3DPipeline is called as a goroutine to run the pipeline
-func RunPhantom3DPipeline(frameQueue *goconcurrentqueue.FIFO, width, height int) {
+func RunPhantom3DPipeline(frameQueue *goconcurrentqueue.FIFO, port int, width, height int) {
 	runGMainLoop(func() error {
 		var pipeline *gst.Pipeline
 		var err error
-		if pipeline, _, err = createPhantom3DPipeline(frameQueue, uint(width), uint(height)); err != nil {
+		if pipeline, _, err = createPhantom3DPipeline(frameQueue, port, uint(width), uint(height)); err != nil {
 			return err
 		}
+
+		fmt.Println("Pipeline created. Running Pipeline..")
+
 		return activityLoop(pipeline)
 	})
 }
@@ -105,7 +108,7 @@ func runGMainLoop(f func() error) {
 	mainLoop.Run()
 }
 
-func createPhantom3DPipeline(frameQueue *goconcurrentqueue.FIFO, width, height uint) (*gst.Pipeline, *app.Source, error) {
+func createPhantom3DPipeline(frameQueue *goconcurrentqueue.FIFO, port int, initialWidth, initialHeight uint) (*gst.Pipeline, *app.Source, error) {
 	gst.Init(nil)
 
 	// Create a pipeline
@@ -115,14 +118,27 @@ func createPhantom3DPipeline(frameQueue *goconcurrentqueue.FIFO, width, height u
 	}
 
 	// Create the elements
-	elems, err := gst.NewElementMany("appsrc", "videoconvert", "autovideosink")
+	//elems, err := gst.NewElementMany("appsrc", "videoconvert", "autovideosink")
+	elems, err := gst.NewElementMany("appsrc", "videoconvert", "vp8enc", "rtpvp8pay", "udpsink")
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// Add the elements to the pipeline and link them
-	pipeline.AddMany(elems...)
-	gst.ElementLinkMany(elems...)
+	// Add the elements to the pipeline
+	addError := pipeline.AddMany(elems...)
+
+	if addError != nil {
+		fmt.Println(addError)
+		fmt.Println("Something went wrong with adding elements")
+	}
+
+	//Link all the elements in the pipeline
+	linkError := gst.ElementLinkMany(elems...)
+
+	if linkError != nil {
+		fmt.Println(linkError)
+		fmt.Println("Something went wrong with linking elements")
+	}
 
 	// Get the app sourrce from the first element returned
 	src := app.SrcFromElement(elems[0])
@@ -130,14 +146,25 @@ func createPhantom3DPipeline(frameQueue *goconcurrentqueue.FIFO, width, height u
 	// Specify the format we want to provide as application into the pipeline
 	// by creating a video info with the given format and creating caps from it for the appsrc element.
 	videoInfo := video.NewInfo().
-		WithFormat(video.FormatRGBA, width, height).
+		WithFormat(video.FormatRGBA, initialWidth, initialHeight).
 		WithFPS(gst.Fraction(30, 1))
 
 	src.SetCaps(videoInfo.ToCaps())
 	src.SetProperty("format", gst.FormatTime)
 
-	previousTime := time.Now()
-	previousFrame := NewInitialFrameContainer(int(width), int(height))
+	vp8encElem := elems[2]
+	vp8encElem.SetProperty("error-resilient", 2)
+	vp8encElem.SetProperty("keyframe-max-dist", 10)
+	vp8encElem.SetProperty("auto-alt-ref", true)
+	vp8encElem.SetProperty("cpu-used", 1)
+	vp8encElem.SetProperty("deadline", 1)
+
+	udpsinkElem := elems[4]
+	udpsinkElem.SetProperty("host", "127.0.0.1")
+	udpsinkElem.SetProperty("port", port)
+
+	//previousTime := time.Now()
+	previousFrame := NewInitialFrameContainer(int(initialWidth), int(initialHeight))
 	frameCount := 0
 
 	// Since our appsrc element operates in pull mode (it asks us to provide data),
@@ -148,8 +175,8 @@ func createPhantom3DPipeline(frameQueue *goconcurrentqueue.FIFO, width, height u
 	// this handler will be called (on average) as many times as the FPS set.
 	src.SetCallbacks(&app.SourceCallbacks{
 		NeedDataFunc: func(self *app.Source, _ uint) {
-			fmt.Println("Since last time:", time.Since(previousTime))
-			previousTime = time.Now()
+			//fmt.Println("Since last time:", time.Since(previousTime))
+			//previousTime = time.Now()
 
 			var buffer []byte
 			var currentFrame uint
@@ -158,13 +185,13 @@ func createPhantom3DPipeline(frameQueue *goconcurrentqueue.FIFO, width, height u
 			frameInt, queueErr := frameQueue.Dequeue()
 
 			if queueErr != nil {
-				fmt.Println("Queue is locked or empty")
+				//fmt.Println(queueErr)
 			}
 
 			newFrame, isExpectedType := frameInt.(*GStreamerFrameContainer)
 
 			if !isExpectedType {
-				fmt.Println("Wrong type passed! Could be nil Passing the backup frame instead")
+				//fmt.Println("Wrong type passed! Could be nil Passing the backup frame instead")
 				// if skipped a frame pump the last frame sent as a new frame just to ensure the video FPS never drops
 				newFrame = previousFrame
 			}
@@ -198,7 +225,7 @@ func createPhantom3DPipeline(frameQueue *goconcurrentqueue.FIFO, width, height u
 
 			// fmt.Println("Pushed frame ", currentFrame)
 			// fmt.Println("Time to process this frame", time.Since(previousTime))
-			previousTime = time.Now()
+			//previousTime = time.Now()
 
 			//i++
 		},
@@ -261,139 +288,3 @@ func activityLoop(pipeline *gst.Pipeline) error {
 
 	return nil
 }
-
-// // UpdateBuffer updates the pixels
-// func UpdateDummyBuffer(imagestruct *FrameContainer, interval time.Duration, width, height int) {
-
-// 	for {
-// 		imagestruct.mutex.Lock()
-
-// 		// Get all 256 colors in the RGB8P palette.
-// 		palette := video.FormatRGB8P.Palette()
-// 		pixels := produceImageFrame(palette[imagestruct.nextFrameCount], width, height)
-
-// 		imagestruct.buffer = pixels
-
-// 		imagestruct.nextFrameCount++
-
-// 		imagestruct.mutex.Unlock()
-
-// 		//fmt.Println("Updated Buffer")
-
-// 		time.Sleep(interval)
-// 	}
-
-// }
-
-// // RunPhantom3DPipeline is called as a goroutine to run the pipeline
-// func RunDummyPhantom3DPipeline(frameCont *FrameContainer, width, height int) {
-// 	runGMainLoop(func() error {
-// 		var pipeline *gst.Pipeline
-// 		var err error
-// 		if pipeline, _, err = createDummyPhantom3DPipeline(frameCont, uint(width), uint(height)); err != nil {
-// 			return err
-// 		}
-// 		return activityLoop(pipeline)
-// 	})
-// }
-
-// func createDummyPhantom3DPipeline(imagestruct *FrameContainer, width, height uint) (*gst.Pipeline, *app.Source, error) {
-// 	gst.Init(nil)
-
-// 	// Create a pipeline
-// 	pipeline, err := gst.NewPipeline("")
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
-
-// 	// Create the elements
-// 	elems, err := gst.NewElementMany("appsrc", "videoconvert", "autovideosink")
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
-
-// 	// Add the elements to the pipeline and link them
-// 	pipeline.AddMany(elems...)
-// 	gst.ElementLinkMany(elems...)
-
-// 	// Get the app sourrce from the first element returned
-// 	src := app.SrcFromElement(elems[0])
-
-// 	// Specify the format we want to provide as application into the pipeline
-// 	// by creating a video info with the given format and creating caps from it for the appsrc element.
-// 	videoInfo := video.NewInfo().
-// 		WithFormat(video.FormatRGBA, width, height).
-// 		WithFPS(gst.Fraction(10, 1))
-
-// 	src.SetCaps(videoInfo.ToCaps())
-// 	src.SetProperty("format", gst.FormatTime)
-// 	src.SetProperty("do-timestamp", true)
-// 	src.SetProperty("min-latency", 0)
-// 	src.SetProperty("emit-signals", false)
-// 	src.SetProperty("is-live", true)
-
-// 	previousTime := time.Now()
-
-// 	// Since our appsrc element operates in pull mode (it asks us to provide data),
-// 	// we add a handler for the need-data callback and provide new data from there.
-// 	// While the buffers of all elements of the pipeline are still empty, this will be called
-// 	// a couple of times until all of them are filled. After this initial period,
-// 	// this handler will be called (on average) as many times as the FPS set.
-// 	src.SetCallbacks(&app.SourceCallbacks{
-// 		NeedDataFunc: func(self *app.Source, _ uint) {
-// 			fmt.Println("Pipeline callback Time since last time: ", time.Since(previousTime))
-// 			previousTime = time.Now()
-
-// 			imagestruct.mutex.RLock()
-// 			currentFrame := imagestruct.nextFrameCount - 1
-// 			//buffer := imagestruct.buffer
-// 			imagestruct.mutex.RUnlock()
-// 			fmt.Println("Time to process the read mutex: ", time.Since(previousTime))
-// 			previousTime = time.Now()
-
-// 			// If we've reached the end of the palette, end the stream.
-// 			if currentFrame > 255 {
-// 				src.EndStream()
-// 				return
-// 			}
-
-// 			//fmt.Println("Producing frame:", imagestruct.nextFrameCount-1)
-
-// 			// Create a buffer that can hold exactly one video RGBA frame.
-// 			buf := gst.NewBufferWithSize(videoInfo.Size())
-// 			//buf := gst.NewBufferFromBytes(buffer)
-// 			fmt.Println("Time to create the GST buffer: ", time.Since(previousTime))
-// 			previousTime = time.Now()
-
-// 			// For each frame we produce, we set the timestamp when it should be displayed
-// 			// The autovideosink will use this information to display the frame at the right time.
-// 			buf.SetPresentationTimestamp(time.Duration(currentFrame) * 100 * time.Millisecond)
-
-// 			mapInfo := buf.Map(gst.MapWrite)
-
-// 			if mapInfo == nil {
-// 				fmt.Println("Something went wrong with MapInfo")
-// 				return
-// 			}
-
-// 			//mapInfo.CopyData(buffer)
-
-// 			//buf.Unmap(mapInfo)
-
-// 			fmt.Println("Time to write buffer and timestamp: ", time.Since(previousTime))
-// 			previousTime = time.Now()
-
-// 			// Push the buffer onto the pipeline.
-// 			self.PushBuffer(buf)
-// 			fmt.Println("Time to push buffer: ", time.Since(previousTime))
-// 			previousTime = time.Now()
-
-// 			//fmt.Println("Time to process this frame: ", time.Since(previousTime))
-// 			//previousTime = time.Now()
-
-// 			//i++
-// 		},
-// 	})
-
-// 	return pipeline, src, nil
-// }

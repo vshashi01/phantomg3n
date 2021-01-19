@@ -15,9 +15,6 @@ import (
 	"github.com/vshashi01/webg3n/encode"
 )
 
-//AppSingleton used to the http calls
-var AppSingleton *RenderingApp
-
 // ImageSettings for rendering image
 type ImageSettings struct {
 	saturation   float64
@@ -80,17 +77,18 @@ type RenderingApp struct {
 	imageSettings     ImageSettings
 	selectionBuffer   map[core.INode][]graphic.GraphicMaterial
 	selectionMaterial material.IMaterial
-	modelpath         string
 	entityList        map[string]*core.Node
 	graphicList       map[*core.Node]*graphic.Mesh
 	Debug             bool
 	frameQueue        *goconcurrentqueue.FIFO
+	uuid              string
+	//peerConnection    *webrtc.PeerConnection
 
 	//nodeBuffer        map[string]*core.Node
 }
 
 // LoadRenderingApp loads the rendering application
-func LoadRenderingApp(app *RenderingApp, sessionID string, h int, w int, write chan []byte, read chan []byte, modelpath string) {
+func LoadRenderingApp(app *RenderingApp, sessionID string, h int, w int, write chan []byte, read chan []byte, udpsinkPort int, closeCallback func()) {
 	a, err := application.Create(application.Options{
 		Title:       "g3nServerApplication",
 		Width:       w,
@@ -109,6 +107,8 @@ func LoadRenderingApp(app *RenderingApp, sessionID string, h int, w int, write c
 	app.Application = *a
 	app.Width = w
 	app.Height = h
+	app.uuid = sessionID
+	//app.peerConnection = peerConnection
 
 	app.imageSettings = ImageSettings{
 		saturation: 0,
@@ -122,19 +122,19 @@ func LoadRenderingApp(app *RenderingApp, sessionID string, h int, w int, write c
 
 	app.cImagestream = write
 	app.cCommands = read
-	app.modelpath = modelpath
 
 	// create the queue and assign an initial frame to it
 	app.frameQueue = goconcurrentqueue.NewFIFO()
 	firstFrame := encode.NewInitialFrameContainer(w, h)
 	app.frameQueue.Enqueue(firstFrame)
 
-	AppSingleton = app
+	//AppSingleton = app
 	app.setupScene()
 	app.Application.Subscribe(application.OnAfterRender, app.onRender)
+	app.Application.Subscribe(application.OnQuit, app.OnQuit)
 
 	// run the gstreamer pipeline on a separate goroutine
-	go encode.RunPhantom3DPipeline(app.frameQueue, app.Width, app.Height)
+	go encode.RunPhantom3DPipeline(app.frameQueue, udpsinkPort, app.Width, app.Height)
 
 	// run the command loop on a separate goroutine
 	go app.commandLoop()
@@ -242,4 +242,10 @@ func (app *RenderingApp) LoadMeshEntity(mesh *graphic.Mesh, name string) bool {
 //GetEntityList returns map
 func (app *RenderingApp) GetEntityList() map[string]*core.Node {
 	return app.entityList
+}
+
+//GetEntityList returns map
+func (app *RenderingApp) OnQuit(evname string, ev interface{}) {
+	newCont := encode.NewGstreamerFrameContainer(nil, uint(app.FrameCount()), true)
+	app.frameQueue.Enqueue(newCont)
 }
