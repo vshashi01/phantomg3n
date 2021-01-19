@@ -12,9 +12,6 @@ import (
 	"github.com/tinyzimmer/go-gst/gst/video"
 )
 
-const width = 620
-const height = 480
-
 //PhantomStreamer is useless
 type PhantomStreamer struct {
 	pipeline  *gst.Pipeline
