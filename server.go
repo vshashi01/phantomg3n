@@ -18,6 +18,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/vshashi01/webg3n/phantomrtc"
 	"github.com/vshashi01/webg3n/renderer"
+	"github.com/vshashi01/webg3n/utilities"
 )
 
 const (
@@ -114,6 +115,23 @@ func (clientMap *ClientMap) GetClient(uuid string) (*Client, error) {
 	}
 
 	return client, nil
+}
+
+// GetAllClientID returns a slice of all ids
+func (clientMap *ClientMap) GetAllClientID() ([]string, error) {
+	clientMap.mutex.RLock()
+	defer clientMap.mutex.RUnlock()
+
+	if len(clientMap.clients) == 0 {
+		return nil, errors.New("no clients")
+	}
+
+	keys := make([]string, 0, len(clientMap.clients))
+	for k := range clientMap.clients {
+		keys = append(keys, k)
+	}
+
+	return keys, nil
 }
 
 // streamReader reads messages from the websocket connection and fowards them to the read channel
@@ -215,8 +233,14 @@ func (clientMap *ClientMap) serveWebsocket(c *gin.Context) {
 	clientMap.AddClient(sessionID.String(), client)
 	fmt.Println("Client Added")
 
+	// Get a free port to dump the viewport video to through UDP
+	udpsinkPort, err := utilities.GetFreePort()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
 	// run 3d application in separate go routine
-	udpsinkPort := 5004
 	go renderer.LoadRenderingApp(&client.app, sessionID.String(), height, width, client.write, client.read, udpsinkPort, func() {
 		//connection set to False and disconnect the peerConnection
 		client.isConnected = false
@@ -229,9 +253,6 @@ func (clientMap *ClientMap) serveWebsocket(c *gin.Context) {
 	// so they can act concurrently
 	go client.streamReader()
 	go client.streamWriter()
-
-	//offer the track when the peer becomes connected and the render track becomes available
-	//go client.offerTracktoPeer(peerConnection)
 }
 
 // loadModel loads GLTF model
@@ -307,6 +328,23 @@ func (clientMap *ClientMap) getObjects(c *gin.Context) {
 
 		index++
 	}
+
+	c.JSON(200, collection)
+	return
+}
+
+// getAllClientID returns all the client ids currently available
+func (clientMap *ClientMap) getAllClientID(c *gin.Context) {
+
+	collection := new(ClientCollection)
+
+	lala, err := clientMap.GetAllClientID()
+	if err != nil {
+		c.JSON(401, "No clients")
+		return
+	}
+
+	collection.ClientIDs = lala
 
 	c.JSON(200, collection)
 	return
@@ -397,7 +435,11 @@ func (client *Client) createAndWriteTrack(udpsinkPort int) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Track Created")
+
+	fmt.Println("Track Created by listening to UDP Port @", udpsinkPort)
+
+	//Send the video to the connected peers if there are any
+	client.peerConnectionManager.SignalPeerConnections(client.viewportTrack)
 
 	// Read RTP packets forever and send them to the localTrack which would then be added to each peer connections
 	for {
@@ -420,7 +462,7 @@ func (client *Client) createAndWriteTrack(udpsinkPort int) {
 	}
 }
 
-// Handle incoming websockets
+// creates the new PeerConnection that feeds the necessary video for the specified client ID
 func (clientMap *ClientMap) createRTCPeerConnection(c *gin.Context) {
 
 	idString := getUUID(c)
@@ -455,10 +497,16 @@ func (clientMap *ClientMap) createRTCPeerConnection(c *gin.Context) {
 		return
 	}
 
+	//close the connection if this frame returns
 	defer peerConnection.Close()
+
 	client.peerConnectionManager.SignalPeerConnections(client.viewportTrack)
 
-	fmt.Println("Something in RTC going on")
-
+	//run forever until the connection gets closed
 	peerConnection.RunWebsocket()
+}
+
+//ClientCollection stuff to Json
+type ClientCollection struct {
+	ClientIDs []string `json:"clients"`
 }

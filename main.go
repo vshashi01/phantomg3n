@@ -53,6 +53,7 @@ func main() {
 	router.Any("/rtcwebg3n", clientMap.createRTCPeerConnection)
 	router.PUT("/loadModel", clientMap.loadModel)
 	router.GET("/objects", clientMap.getObjects)
+	router.GET("/allclients", clientMap.getAllClientID)
 	log.Println("Starting HTTP Server on Port 8000")
 
 	go func() {
