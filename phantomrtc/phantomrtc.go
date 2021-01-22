@@ -209,8 +209,6 @@ func (phantomPeer *phantomPeerConnection) dispatchKeyFrame() {
 			},
 		})
 	}
-
-	return
 }
 
 // NewPhantomPeerManager with all variables initialized
@@ -289,10 +287,7 @@ func (manager *PhantomPeerManager) RemoveAllClosed() {
 // Only reads the connction controls.
 func (manager *PhantomPeerManager) SignalPeerConnections(track *webrtc.TrackLocalStaticRTP) {
 	manager.mutex.RLock()
-	defer func() {
-		manager.mutex.RUnlock()
-		manager.dispatchKeyFrameToAllPeer()
-	}()
+	defer manager.mutex.RUnlock()
 
 	for _, phantomPeer := range manager.peerConnections {
 		if !phantomPeer.IsActive() {
@@ -306,8 +301,8 @@ func (manager *PhantomPeerManager) SignalPeerConnections(track *webrtc.TrackLoca
 	}
 }
 
-// dispatchKeyFrameToAlPeer sends a keyframe to all PeerConnections, used everytime a new user joins the call
-func (manager *PhantomPeerManager) dispatchKeyFrameToAllPeer() {
+// DispatchKeyFrameToAllPeer sends a keyframe to all PeerConnections, should be called after all SignalPeerConnection
+func (manager *PhantomPeerManager) DispatchKeyFrameToAllPeer() {
 	manager.mutex.RLock()
 	defer manager.mutex.RUnlock()
 

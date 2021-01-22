@@ -338,13 +338,15 @@ func (clientMap *ClientMap) getAllClientID(c *gin.Context) {
 
 	collection := new(ClientCollection)
 
-	lala, err := clientMap.GetAllClientID()
+	clientIDs, err := clientMap.GetAllClientID()
 	if err != nil {
-		c.JSON(401, "No clients")
+		collection.Count = 0
+		c.JSON(200, collection)
 		return
 	}
 
-	collection.ClientIDs = lala
+	collection.ClientIDs = clientIDs
+	collection.Count = len(clientIDs)
 
 	c.JSON(200, collection)
 	return
@@ -497,10 +499,14 @@ func (clientMap *ClientMap) createRTCPeerConnection(c *gin.Context) {
 		return
 	}
 
-	//close the connection if this frame returns
-	defer peerConnection.Close()
+	defer func() {
+		//close the connection if this frame returns
+		peerConnection.Close()
+		fmt.Println("Closed Peer connection")
+	}()
 
 	client.peerConnectionManager.SignalPeerConnections(client.viewportTrack)
+	client.peerConnectionManager.DispatchKeyFrameToAllPeer()
 
 	//run forever until the connection gets closed
 	peerConnection.RunWebsocket()
@@ -509,4 +515,5 @@ func (clientMap *ClientMap) createRTCPeerConnection(c *gin.Context) {
 //ClientCollection stuff to Json
 type ClientCollection struct {
 	ClientIDs []string `json:"clients"`
+	Count     int      `json:"count"`
 }
