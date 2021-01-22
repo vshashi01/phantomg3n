@@ -103,8 +103,40 @@ func (app *RenderingApp) commandLoop() {
 	}
 }
 
+// GetUUID returns UUID
+func (app *RenderingApp) GetUUID(cmd Command) {
+	app.SendMessageToClient(cmd.Cmd, app.uuid)
+}
+
+// // IceCandidate passes the candidate to the peerConnection
+// func (app *RenderingApp) IceCandidate(cmd Command) {
+// 	candidate := webrtc.ICECandidateInit{}
+// 	if err := json.Unmarshal([]byte(cmd.Val), &candidate); err != nil {
+// 		log.Println(err)
+// 		return
+// 	}
+
+// 	if err := app.peerConnection.AddICECandidate(candidate); err != nil {
+// 		log.Println(err)
+// 		return
+// 	}
+// }
+
+// // PeerAnswer generate the required offer for the answer
+// func (app *RenderingApp) PeerAnswer(cmd Command) {
+// 	answer := webrtc.SessionDescription{}
+// 	if err := json.Unmarshal([]byte(cmd.Val), &answer); err != nil {
+// 		log.Println(err)
+// 		return
+// 	}
+
+// 	if err := app.peerConnection.SetRemoteDescription(answer); err != nil {
+// 		log.Println(err)
+// 		return
+// 	}
+// }
+
 // Setorbitaction sets
-//func (app *RenderingApp) Mousedown(cmd Command) {
 func (app *RenderingApp) Setorbitaction(cmd Command) {
 	action := mapActionToMouseButton(cmd.Val)
 
