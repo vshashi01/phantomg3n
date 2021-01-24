@@ -15,15 +15,17 @@ require (
 	github.com/pion/rtp v1.6.2
 	github.com/pion/webrtc/v3 v3.0.3
 	github.com/satori/go.uuid v1.2.0
-	github.com/tinyzimmer/go-gst v0.1.4
+	github.com/tinyzimmer/go-gst v0.1.16
 	golang.org/x/sys v0.0.0-20201218084310-7d0127a74742 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-replace github.com/g3n/engine => E:\Development\Shashi-Git\webg3n-engine
+// Windows replaces
+//replace github.com/g3n/engine => E:\Development\Shashi-Git\webg3n-engine
+//replace github.com/tinyzimmer/go-gst => E:\Development\Shashi-Git\go-gst
 
-//replace github.com/g3n/engine => /home/vshashi01/Dev/webg3n-engine
+// WSL replaces
+replace github.com/g3n/engine => ../webg3n-engine
+replace github.com/tinyzimmer/go-gst => ../go-gst
 
-replace github.com/tinyzimmer/go-gst => E:\Development\Shashi-Git\go-gst
-
-go 1.15
+go 1.14
