@@ -156,6 +156,7 @@ func (phantomPeer *phantomPeerConnection) setupTrack(track *webrtc.TrackLocalSta
 		rtcpBuf := make([]byte, 1500)
 		for {
 			if _, _, rtcpErr := rtpSender.Read(rtcpBuf); rtcpErr != nil {
+				fmt.Println("RTPSender ended")
 				return
 			}
 		}
@@ -313,9 +314,24 @@ func (manager *PhantomPeerManager) DispatchKeyFrameToAllPeer() {
 
 // CreateNewConnection Create a new connection and adds to target manager.
 func (manager *PhantomPeerManager) CreateNewConnection(websocket *websocket.Conn) (PhantomPeerInterface, error) {
+
+	// Prepare WebRTC configuration
+	config := webrtc.Configuration{
+		ICEServers: []webrtc.ICEServer{
+			{
+				URLs: []string{
+					"stun:stun.l.google.com:19302",
+					"stun:stun1.l.google.com:19302",
+					"stun:stun2.l.google.com:19302",
+					"stun:stun3.l.google.com:19302",
+					"stun:stun4.l.google.com:19302"},
+			},
+		},
+	}
+
 	// Create new PeerConnection
 	// Setup all neessary state callbacks
-	peerConnection, err := webrtc.NewPeerConnection(webrtc.Configuration{})
+	peerConnection, err := webrtc.NewPeerConnection(config)
 	if err != nil {
 		log.Print(err)
 		return nil, err
@@ -344,13 +360,17 @@ func (manager *PhantomPeerManager) CreateNewConnection(websocket *websocket.Conn
 
 	// If PeerCnnection is closed remove it from global list
 	peerConnection.OnConnectionStateChange(func(p webrtc.PeerConnectionState) {
+		fmt.Println("Peer Connection State ", p.String())
 		switch p {
 		case webrtc.PeerConnectionStateFailed:
 			if err := peerConnection.Close(); err != nil {
 				log.Print(err)
-
 			}
 		}
+	})
+
+	peerConnection.OnICEConnectionStateChange(func(i webrtc.ICEConnectionState) {
+		fmt.Println("Ice Connection State ", i.String())
 	})
 
 	phantomPeer := newPhantomPeer(peerConnection, websocket)

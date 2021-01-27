@@ -420,7 +420,8 @@ func (client *Client) createAndWriteTrack(udpsinkPort int) {
 	fmt.Println("Waiting for RTP Packets, please run GStreamer or ffmpeg now")
 
 	// Listen for a single RTP Packet, we need this to determine the SSRC
-	inboundRTPPacket := make([]byte, 4096) // UDP MTU
+	//inboundRTPPacket := make([]byte, 4096) // UDP MTU
+	inboundRTPPacket := make([]byte, 1200) // UDP MTU
 	n, _, err := listener.ReadFromUDP(inboundRTPPacket)
 	if err != nil {
 		panic(err)
@@ -448,6 +449,7 @@ func (client *Client) createAndWriteTrack(udpsinkPort int) {
 
 		//once client becomes disconnected, just return from this function
 		if !client.isConnected {
+			fmt.Println("RTP packets stopped, client closed")
 			client.viewportTrack = nil
 			break
 		}
@@ -460,6 +462,8 @@ func (client *Client) createAndWriteTrack(udpsinkPort int) {
 
 		if _, writeErr := client.viewportTrack.Write(inboundRTPPacket[:n]); writeErr != nil {
 			panic(writeErr)
+		} else {
+
 		}
 	}
 }

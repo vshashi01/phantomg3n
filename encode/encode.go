@@ -156,6 +156,9 @@ func createPhantom3DPipeline(frameQueue *goconcurrentqueue.FIFO, port int, initi
 	vp8encElem.SetProperty("cpu-used", 1)
 	vp8encElem.SetProperty("deadline", 1)
 
+	rtpvp8payElem := elems[3]
+	rtpvp8payElem.SetProperty("mtu", 1200) //Set a suitable MTU to the client network limit
+
 	udpsinkElem := elems[4]
 	udpsinkElem.SetProperty("host", "127.0.0.1")
 	udpsinkElem.SetProperty("port", port)
