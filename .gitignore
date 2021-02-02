@@ -19,3 +19,5 @@ vendor/
 webg3n
 __debug_bin
 launch.json
+*.gltf
+*.glb

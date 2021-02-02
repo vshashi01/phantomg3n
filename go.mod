@@ -26,6 +26,7 @@ require (
 
 // WSL replaces
 replace github.com/g3n/engine => ../webg3n-engine
+
 replace github.com/tinyzimmer/go-gst => ../go-gst
 
 go 1.14
