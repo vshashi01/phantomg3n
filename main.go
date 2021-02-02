@@ -47,7 +47,7 @@ func main() {
 	clientMap := NewClientMap()
 
 	//clean all clients on a separate routine
-	//go CleanClient(clientMap)
+	//go clientMap.CleanInActiveClients()
 
 	router.Any("/webg3n", clientMap.serveWebsocket)
 	router.Any("/rtcwebg3n", clientMap.createRTCPeerConnection)

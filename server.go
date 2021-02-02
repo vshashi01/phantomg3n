@@ -352,8 +352,8 @@ func (clientMap *ClientMap) getAllClientID(c *gin.Context) {
 	return
 }
 
-// CleanClient cleans the client from the disconnected clients.
-func CleanClient(clientMap *ClientMap) {
+// CleanInActiveClients removes and clears all inactive clients.
+func (clientMap *ClientMap) CleanInActiveClients() {
 	ticker := time.NewTicker(2 * time.Minute)
 	defer func() {
 		ticker.Stop()
@@ -362,6 +362,7 @@ func CleanClient(clientMap *ClientMap) {
 	for {
 		select {
 		case <-ticker.C:
+			fmt.Println("Client cleaner called")
 			disConnectedIDs := make([]string, len(clientMap.clients))
 
 			clientMap.mutex.RLock()
@@ -371,7 +372,7 @@ func CleanClient(clientMap *ClientMap) {
 					disConnectedIDs = append(disConnectedIDs, id)
 				}
 			}
-			clientMap.mutex.Unlock()
+			clientMap.mutex.RUnlock()
 
 			//clean up all disconnected clients
 			for _, clientID := range disConnectedIDs {

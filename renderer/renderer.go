@@ -143,6 +143,7 @@ func LoadRenderingApp(app *RenderingApp, sessionID string, h int, w int, write c
 		panic(err)
 	}
 
+	closeCallback()
 	app.Log().Info("app was running for %f seconds\n", app.RunSeconds())
 }
 

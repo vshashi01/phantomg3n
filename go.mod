@@ -20,13 +20,8 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-// Windows replaces
-//replace github.com/g3n/engine => E:\Development\Shashi-Git\webg3n-engine
-//replace github.com/tinyzimmer/go-gst => E:\Development\Shashi-Git\go-gst
-
-// WSL replaces
+// This files shall be placed in a folder above the current dir
 replace github.com/g3n/engine => ../webg3n-engine
-
 replace github.com/tinyzimmer/go-gst => ../go-gst
 
 go 1.14
