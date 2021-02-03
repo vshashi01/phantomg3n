@@ -168,8 +168,12 @@ func (client *Client) streamWriter() {
 		client.conn.Close()
 	}()
 	for {
-		// Go’s select lets you wait on multiple channel operations.
-		// We’ll use select to await both of these values simultaneously.
+
+		//return is client is already disconnected
+		if !client.isConnected {
+			return
+		}
+
 		select {
 		case message, ok := <-client.write:
 			client.conn.SetWriteDeadline(time.Now().Add(writeTimeout))
@@ -505,8 +509,8 @@ func (clientMap *ClientMap) createRTCPeerConnection(c *gin.Context) {
 	}
 
 	defer func() {
-		//close the connection if this frame returns
-		peerConnection.Close()
+		//clean up the peerConnection list when returning
+		client.peerConnectionManager.RemoveAllClosed()
 		fmt.Println("Closed Peer connection")
 	}()
 

@@ -65,6 +65,12 @@ func (phantomPeer *phantomPeerConnection) Close() {
 func (phantomPeer *phantomPeerConnection) RunWebsocket() {
 	message := &phantomPeerMessage{}
 	for {
+
+		// return if the connection is already closed
+		if !phantomPeer.IsActive() {
+			return
+		}
+
 		fmt.Println("Reading message")
 		_, raw, err := phantomPeer.websocket.ReadMessage()
 
@@ -259,7 +265,7 @@ func (manager *PhantomPeerManager) CloseAll() {
 	}
 }
 
-// RemoveAllClosed reoves all the closed connections from the list
+// RemoveAllClosed removes all the closed connections from the list
 func (manager *PhantomPeerManager) RemoveAllClosed() {
 	manager.mutex.Lock()
 	defer manager.mutex.Unlock()
