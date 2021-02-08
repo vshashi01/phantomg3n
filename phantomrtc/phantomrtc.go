@@ -326,11 +326,16 @@ func (manager *PhantomPeerManager) CreateNewConnection(websocket *websocket.Conn
 		ICEServers: []webrtc.ICEServer{
 			{
 				URLs: []string{
-					"stun:stun.l.google.com:19302",
-					"stun:stun1.l.google.com:19302",
-					"stun:stun2.l.google.com:19302",
-					"stun:stun3.l.google.com:19302",
-					"stun:stun4.l.google.com:19302"},
+					// "stun:stun.l.google.com:19302",
+					// "stun:stun1.l.google.com:19302",
+					// "stun:stun2.l.google.com:19302",
+					// "stun:stun3.l.google.com:19302",
+					// "stun:stun4.l.google.com:19302"
+					"turn:18.220.247.163:3478",
+				},
+				Username:       "vshashi01",
+				Credential:     "bat4Gotham",
+				CredentialType: webrtc.ICECredentialTypePassword,
 			},
 		},
 	}
