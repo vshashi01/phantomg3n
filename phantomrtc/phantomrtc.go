@@ -333,8 +333,8 @@ func (manager *PhantomPeerManager) CreateNewConnection(websocket *websocket.Conn
 					// "stun:stun4.l.google.com:19302"
 					"turn:18.220.247.163:3478",
 				},
-				Username:       "vshashi01",
-				Credential:     "bat4Gotham",
+				Username:       "user",
+				Credential:     "root",
 				CredentialType: webrtc.ICECredentialTypePassword,
 			},
 		},
